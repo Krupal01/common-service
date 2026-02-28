@@ -1,5 +1,8 @@
 package com.krunish.common.security;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public interface OrgAccessValidator {
     void validate(Long userId, Long orgId);
 }

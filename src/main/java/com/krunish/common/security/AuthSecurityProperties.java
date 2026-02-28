@@ -6,8 +6,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import javax.crypto.SecretKey;
 
-@ConfigurationProperties(prefix = "auth.security")
 @Data
+@ConfigurationProperties(prefix = "auth.security")
 public class AuthSecurityProperties {
 
     private String secret;
