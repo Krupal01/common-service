@@ -11,9 +11,9 @@ public class HibernateFilterConfigurer {
 
     private final EntityManager entityManager;
 
-    public HibernateFilterConfigurer(EntityManager entityManager) {
-        this.entityManager = entityManager;
-    }
+//    public HibernateFilterConfigurer(EntityManager entityManager) {
+//        this.entityManager = entityManager;
+//    }
 
     @PostConstruct
     public void enableFilter() {

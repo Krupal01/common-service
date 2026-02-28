@@ -11,9 +11,9 @@ public class JwtValidator {
 
     private final AuthSecurityProperties properties;
 
-    public JwtValidator(AuthSecurityProperties properties) {
-        this.properties = properties;
-    }
+//    public JwtValidator(AuthSecurityProperties properties) {
+//        this.properties = properties;
+//    }
 
     public AuthUser validate(String token) {
 

@@ -12,9 +12,9 @@ public class PermissionAspect {
 
     private final PermissionChecker permissionChecker;
 
-    public PermissionAspect(PermissionChecker permissionChecker) {
-        this.permissionChecker = permissionChecker;
-    }
+//    public PermissionAspect(PermissionChecker permissionChecker) {
+//        this.permissionChecker = permissionChecker;
+//    }
 
     @Before("@annotation(permission)")
     public void check(RequiresPermission permission) {
