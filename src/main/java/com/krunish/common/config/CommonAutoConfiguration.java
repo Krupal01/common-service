@@ -35,10 +35,9 @@ public class CommonAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnBean(OrgAccessValidator.class)
-    public HibernateFilterConfigurer hibernateFilterConfigurer(
-            jakarta.persistence.EntityManager entityManager) {
-        return new HibernateFilterConfigurer(entityManager);
+    @ConditionalOnBean(OrgAccessValidator.class) // ✅ Only if service uses org filtering
+    public HibernateFilterConfigurer hibernateFilterConfigurer() {
+        return new HibernateFilterConfigurer(); // No constructor args — uses @PersistenceContext
     }
 
     @Bean
