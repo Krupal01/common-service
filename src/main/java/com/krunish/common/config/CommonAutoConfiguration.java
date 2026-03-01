@@ -12,6 +12,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplicat
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Import;
 
 import java.util.Optional;
 
@@ -20,6 +21,7 @@ import java.util.Optional;
 @ComponentScan(basePackages = {
         "com.krunish.common.security.aop"  // only scan AOP, not all of security
 })
+@Import(AuthWrapper.class)
 public class CommonAutoConfiguration {
 
     // ✅ Always register these
