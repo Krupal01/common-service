@@ -1,9 +1,0 @@
-spring:
-  application:
-    name: common
-
-auth:
-  public-paths:
-    - /api/auth
-  security:
-    secret: ${JWT_SECRET}
