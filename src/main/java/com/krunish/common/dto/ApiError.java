@@ -1,12 +1,11 @@
 package com.krunish.common.dto;
 
-public class ApiError {
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
+@Getter  // ✅ Add this — without it Jackson returns {}
+@AllArgsConstructor
+public class ApiError {
     private String code;
     private String detail;
-
-    public ApiError(String code, String detail) {
-        this.code = code;
-        this.detail = detail;
-    }
 }
