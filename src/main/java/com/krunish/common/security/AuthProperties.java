@@ -17,8 +17,11 @@ public class AuthProperties {
 
     public boolean isPublic(String path) {
         AntPathMatcher matcher = new AntPathMatcher();
-        return publicPaths != null &&
+        boolean result = publicPaths != null &&
                 publicPaths.stream().anyMatch(pattern -> matcher.match(pattern, path));
+        System.out.println(">>> [AuthProperties] isPublic('" + path + "') = " + result);
+        System.out.println(">>> [AuthProperties] Configured publicPaths = " + publicPaths);
+        return result;
     }
 
     @Data
@@ -26,6 +29,11 @@ public class AuthProperties {
         private String secret;
 
         public SecretKey getSigningKey() {
+            if (secret == null) {
+                System.out.println(">>> [AuthProperties.Security] ❌ secret is NULL — check application.yml auth.security.secret");
+            } else {
+                System.out.println(">>> [AuthProperties.Security] ✅ secret loaded, length = " + secret.length());
+            }
             return Keys.hmacShaKeyFor(secret.getBytes());
         }
     }

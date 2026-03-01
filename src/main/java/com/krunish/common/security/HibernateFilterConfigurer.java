@@ -24,11 +24,20 @@ public class HibernateFilterConfigurer extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
-        Long orgId = OrgContext.getOrgId(); // ✅ Read from ThreadLocal set by JwtFilter
+        Long orgId = OrgContext.getOrgId();
+        System.out.println(">>> [HibernateFilterConfigurer] Request: " + request.getMethod() + " " + request.getRequestURI());
+        System.out.println(">>> [HibernateFilterConfigurer] OrgId from OrgContext: " + orgId);
 
         if (orgId != null) {
-            Session session = entityManager.unwrap(Session.class);
-            session.enableFilter("orgFilter").setParameter("orgId", orgId); // ✅ Apply to ALL queries
+            try {
+                Session session = entityManager.unwrap(Session.class);
+                session.enableFilter("orgFilter").setParameter("orgId", orgId);
+                System.out.println(">>> [HibernateFilterConfigurer] ✅ orgFilter enabled with orgId: " + orgId);
+            } catch (Exception e) {
+                System.out.println(">>> [HibernateFilterConfigurer] ❌ Failed to enable orgFilter: " + e.getMessage());
+            }
+        } else {
+            System.out.println(">>> [HibernateFilterConfigurer] ⚠️ orgId is null — orgFilter NOT applied (public route or missing context)");
         }
 
         filterChain.doFilter(request, response);

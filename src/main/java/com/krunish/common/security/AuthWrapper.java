@@ -18,14 +18,23 @@ public class AuthWrapper {
 
     @Bean
     public JwtFilter jwtFilter() {
+        System.out.println(">>> [AuthWrapper] ✅ JwtFilter bean created");
         return new JwtFilter(jwtValidator, orgAccessValidator, properties);
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        System.out.println(">>> [AuthWrapper] Building SecurityFilterChain...");
+        System.out.println(">>> [AuthWrapper] Public paths being permitted: " + properties.getPublicPaths());
 
+        if (properties.getPublicPaths() == null || properties.getPublicPaths().isEmpty()) {
+            System.out.println(">>> [AuthWrapper] ❌ WARNING — publicPaths is null/empty! All requests will require auth.");
+        }
         http
-                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> {
+                    csrf.disable();
+                    System.out.println(">>> [AuthWrapper] CSRF disabled");
+                })
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(properties.getPublicPaths().toArray(new String[0]))
                         .permitAll()
@@ -33,6 +42,7 @@ public class AuthWrapper {
                 )
                 .addFilterBefore(jwtFilter(), UsernamePasswordAuthenticationFilter.class);
 
+        System.out.println(">>> [AuthWrapper] ✅ SecurityFilterChain built successfully");
         return http.build();
     }
 }
