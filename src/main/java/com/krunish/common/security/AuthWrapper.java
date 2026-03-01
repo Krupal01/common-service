@@ -15,15 +15,6 @@ public class AuthWrapper {
     private final OrgAccessValidator orgAccessValidator;
     private final AuthProperties properties;
 
-//    public AuthWrapper(
-//            JwtValidator jwtValidator,
-//            OrgAccessValidator orgAccessValidator,
-//            AuthProperties properties
-//    ) {
-//        this.jwtValidator = jwtValidator;
-//        this.orgAccessValidator = orgAccessValidator;
-//        this.properties = properties;
-//    }
 
     @Bean
     public JwtFilter jwtFilter() {

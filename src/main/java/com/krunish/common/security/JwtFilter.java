@@ -14,14 +14,6 @@ public class JwtFilter extends OncePerRequestFilter {
     private final OrgAccessValidator orgAccessValidator;
     private final AuthProperties properties;
 
-//    public JwtFilter(JwtValidator jwtValidator,
-//                     OrgAccessValidator orgAccessValidator,
-//                     AuthProperties authProperties) {
-//        this.jwtValidator = jwtValidator;
-//        this.orgAccessValidator = orgAccessValidator;
-//        this.properties = authProperties;
-//    }
-
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,

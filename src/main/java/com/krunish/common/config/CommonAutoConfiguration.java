@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 
 @AutoConfiguration
-@EnableConfigurationProperties({AuthSecurityProperties.class, AuthProperties.class})
+@EnableConfigurationProperties(AuthProperties.class)
 @ComponentScan(basePackages = {
         "com.krunish.common.security.aop"  // only scan AOP, not all of security
 })
@@ -22,7 +22,7 @@ public class CommonAutoConfiguration {
 
     // ✅ Always register these
     @Bean
-    public JwtValidator jwtValidator(AuthSecurityProperties properties) {
+    public JwtValidator jwtValidator(AuthProperties properties) {
         return new JwtValidator(properties);
     }
 

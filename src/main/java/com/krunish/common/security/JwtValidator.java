@@ -9,16 +9,12 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class JwtValidator {
 
-    private final AuthSecurityProperties properties;
-
-//    public JwtValidator(AuthSecurityProperties properties) {
-//        this.properties = properties;
-//    }
+    private final AuthProperties properties;
 
     public AuthUser validate(String token) {
 
         Claims claims = Jwts.parser()
-                .verifyWith(properties.getSigningKey())
+                .verifyWith(properties.getSecurity().getSigningKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
