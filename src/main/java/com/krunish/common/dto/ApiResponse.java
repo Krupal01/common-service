@@ -1,8 +1,11 @@
 package com.krunish.common.dto;
 
+import lombok.Getter;
+
 import java.time.Instant;
 import java.util.List;
 
+@Getter
 public class ApiResponse<T> {
 
     private boolean success;

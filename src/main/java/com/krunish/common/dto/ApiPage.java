@@ -1,8 +1,11 @@
 package com.krunish.common.dto;
 
 import java.util.List;
+
+import lombok.Getter;
 import org.springframework.data.domain.Page;
 
+@Getter
 public class ApiPage<T> {
 
     private List<T> content;
