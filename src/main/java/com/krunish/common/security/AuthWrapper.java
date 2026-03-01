@@ -18,8 +18,13 @@ public class AuthWrapper {
 
     @Bean
     public JwtFilter jwtFilter() {
-        System.out.println(">>> [AuthWrapper] ✅ JwtFilter bean created");
-        return new JwtFilter(jwtValidator, orgAccessValidator, properties);
+        System.out.println(">>> [AuthWrapper] Creating JwtFilter...");
+        System.out.println(">>> [AuthWrapper] OrgAccessValidator present: " + (orgAccessValidator != null));
+        JwtFilter filter = new JwtFilter(jwtValidator, properties);
+        if (orgAccessValidator != null) {
+            filter.setOrgAccessValidator(orgAccessValidator);
+        }
+        return filter;
     }
 
     @Bean

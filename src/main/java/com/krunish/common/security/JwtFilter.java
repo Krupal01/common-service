@@ -7,12 +7,22 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-@RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtValidator jwtValidator;
-    private final OrgAccessValidator orgAccessValidator;
+    private OrgAccessValidator orgAccessValidator;
     private final AuthProperties properties;
+
+    // ✅ Constructor without OrgAccessValidator
+    public JwtFilter(JwtValidator jwtValidator, AuthProperties properties) {
+        this.jwtValidator = jwtValidator;
+        this.properties = properties;
+    }
+
+    // ✅ Called only if service provides OrgAccessValidator
+    public void setOrgAccessValidator(OrgAccessValidator orgAccessValidator) {
+        this.orgAccessValidator = orgAccessValidator;
+    }
 
     @Override
     protected void doFilterInternal(
@@ -35,6 +45,9 @@ public class JwtFilter extends OncePerRequestFilter {
                 return;
             }
 
+            Long orgId = 0L;
+            AuthUser user;
+
             String authHeader = request.getHeader("Authorization");
             System.out.println(">>> [JwtFilter] Authorization header: " + authHeader);
 
@@ -48,7 +61,6 @@ public class JwtFilter extends OncePerRequestFilter {
             System.out.println(">>> [JwtFilter] Token extracted: " + token.substring(0, Math.min(20, token.length())) + "...");
 
             // Validate JWT → returns user only
-            AuthUser user;
             try {
                 user = jwtValidator.validate(token);
                 System.out.println(">>> [JwtFilter] ✅ JWT valid — userId: " + user.userId() + ", email: " + user.email());
@@ -59,33 +71,34 @@ public class JwtFilter extends OncePerRequestFilter {
             }
 
 
-            String orgHeader = request.getHeader("X-ORG-ID");
-            System.out.println(">>> [JwtFilter] X-ORG-ID header: " + orgHeader);
+            if(orgAccessValidator != null) {
+                String orgHeader = request.getHeader("X-ORG-ID");
+                System.out.println(">>> [JwtFilter] X-ORG-ID header: " + orgHeader);
 
-            if (orgHeader == null) {
-                System.out.println(">>> [JwtFilter] ❌ Missing X-ORG-ID header → 400");
-                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                return;
-            }
+                if (orgHeader == null) {
+                    System.out.println(">>> [JwtFilter] ❌ Missing X-ORG-ID header → 400");
+                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    return;
+                }
 
-            Long orgId;
-            try {
-                orgId = Long.parseLong(orgHeader);
-                System.out.println(">>> [JwtFilter] Parsed orgId: " + orgId);
-            } catch (NumberFormatException e) {
-                System.out.println(">>> [JwtFilter] ❌ Invalid X-ORG-ID format: " + orgHeader + " → 400");
-                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                return;
-            }
+                try {
+                    orgId = Long.parseLong(orgHeader);
+                    System.out.println(">>> [JwtFilter] Parsed orgId: " + orgId);
+                } catch (NumberFormatException e) {
+                    System.out.println(">>> [JwtFilter] ❌ Invalid X-ORG-ID format: " + orgHeader + " → 400");
+                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    return;
+                }
 
-            // Validate user belongs to org
-            try {
-                orgAccessValidator.validate(user.userId(), orgId);
-                System.out.println(">>> [JwtFilter] ✅ Org access valid for userId: " + user.userId() + ", orgId: " + orgId);
-            } catch (Exception e) {
-                System.out.println(">>> [JwtFilter] ❌ Org access validation failed: " + e.getMessage());
-                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                return;
+                // Validate user belongs to org
+                try {
+                    orgAccessValidator.validate(user.userId(), orgId);
+                    System.out.println(">>> [JwtFilter] ✅ Org access valid for userId: " + user.userId() + ", orgId: " + orgId);
+                } catch (Exception e) {
+                    System.out.println(">>> [JwtFilter] ❌ Org access validation failed: " + e.getMessage());
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    return;
+                }
             }
 
 

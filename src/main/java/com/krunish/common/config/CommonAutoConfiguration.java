@@ -13,6 +13,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 
+import java.util.Optional;
+
 @AutoConfiguration
 @EnableConfigurationProperties(AuthProperties.class)
 @ComponentScan(basePackages = {
@@ -27,11 +29,12 @@ public class CommonAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnBean(OrgAccessValidator.class)
     public JwtFilter jwtFilter(JwtValidator jwtValidator,
-                               OrgAccessValidator orgAccessValidator,
+                               Optional<OrgAccessValidator> orgAccessValidator,
                                AuthProperties properties) {
-        return new JwtFilter(jwtValidator, orgAccessValidator, properties);
+        JwtFilter filter = new JwtFilter(jwtValidator, properties);
+        orgAccessValidator.ifPresent(filter::setOrgAccessValidator);
+        return filter;
     }
 
     @Bean
@@ -41,11 +44,11 @@ public class CommonAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnBean(OrgAccessValidator.class)
     public AuthWrapper authWrapper(JwtValidator jwtValidator,
-                                   OrgAccessValidator orgAccessValidator,
-                                   AuthProperties properties) {
-        return new AuthWrapper(jwtValidator, orgAccessValidator, properties);
+                                   AuthProperties properties,
+                                   Optional<OrgAccessValidator> orgAccessValidator) {
+        System.out.println(">>> [AutoConfig] OrgAccessValidator present: " + orgAccessValidator.isPresent());
+        return new AuthWrapper(jwtValidator, orgAccessValidator.orElse(null), properties);
     }
 
     @Bean
