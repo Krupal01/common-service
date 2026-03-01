@@ -2,6 +2,8 @@ package com.krunish.common.config;
 
 import com.krunish.common.exception.GlobalExceptionHandler;
 import com.krunish.common.security.*;
+import com.krunish.common.security.aop.PermissionAspect;
+import com.krunish.common.security.aop.PermissionChecker;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -43,6 +45,12 @@ public class CommonAutoConfiguration {
                                    OrgAccessValidator orgAccessValidator,
                                    AuthProperties properties) {
         return new AuthWrapper(jwtValidator, orgAccessValidator, properties);
+    }
+
+    @Bean
+    @ConditionalOnBean(PermissionChecker.class)
+    public PermissionAspect permissionAspect(PermissionChecker permissionChecker) {
+        return new PermissionAspect(permissionChecker);
     }
 
     @Bean
