@@ -4,10 +4,14 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 import com.krunish.common.security.AuthProperties;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Generic JWT filter.
@@ -103,11 +107,24 @@ public class GenericJwtFilter<C extends AuthClaims> extends OncePerRequestFilter
             AuthContext.set(claims, orgId, false);
             System.out.println(">>> [JwtFilter] ✅ AuthContext set — proceeding to controller");
             System.out.println("==============================");
+            List<SimpleGrantedAuthority> authorities = List.of(
+                    new SimpleGrantedAuthority("ROLE_USER")
+            );
+
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            claims,     // principal — your typed claims object
+                            null,       // credentials — null after auth
+                            authorities
+                    );
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
             filterChain.doFilter(request, response);
 
         } finally {
             AuthContext.clear();
+            SecurityContextHolder.clearContext();
         }
     }
 }
