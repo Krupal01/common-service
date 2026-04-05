@@ -1,12 +1,80 @@
-Here is your **clean README.md (minimal, production-style)** for `dto` package.
+# Common Library — README
 
-No extra explanation. Only purpose, usage, and JSON format.
+---
+
+# Package Overview
+
+```text
+com.krunish.common
+ ├── config
+ │    ├── CommonAutoConfiguration          (legacy mode)
+ │    └── GenericCommonAutoConfiguration   (generic mode)
+ ├── dto
+ │    ├── ApiResponse
+ │    ├── ApiError
+ │    └── ApiPage
+ ├── event
+ │    ├── BaseOrgEntity
+ │    ├── KafkaEventEnvelope
+ │    └── OrgIdFilter
+ ├── exception
+ │    ├── AppException
+ │    └── GlobalExceptionHandler
+ └── security
+      ├── aop
+      ├── AuthProperties
+      ├── AuthSecurityProperties
+      ├── HibernateFilterConfigurer
+      ├── [legacy]  AuthUser
+      ├── [legacy]  JwtValidator
+      ├── [legacy]  JwtFilter
+      ├── [legacy]  OrgAccessValidator
+      ├── [legacy]  OrgContext
+      └── generic
+           ├── AuthClaims
+           ├── AuthContext
+           ├── AuthFilter
+           ├── ClaimsExtractor
+           ├── DefaultAuthClaims
+           ├── DefaultClaimsExtractor
+           ├── GenericJwtFilter
+           ├── GenericJwtTokenValidator
+           ├── GenericOrgAccessValidator
+           └── TokenValidator
+```
+
+---
+
+# Choosing a Mode
+
+This library ships **two security modes**. Set one per service in `application.yml`:
+
+```yaml
+krunish:
+  auth:
+    mode: legacy    # default — loads CommonAutoConfiguration
+    mode: generic   # loads GenericCommonAutoConfiguration
+```
+
+| | Legacy Mode | Generic Mode |
+|---|---|---|
+| **Config class** | `CommonAutoConfiguration` | `GenericCommonAutoConfiguration` |
+| **User ID type** | `Long` only | Any (`Long`, `UUID`, custom) |
+| **Claims** | `AuthUser(userId, email)` | Custom record implementing `AuthClaims` |
+| **Context** | `OrgContext` | `AuthContext` |
+| **You must provide** | `JwtValidator` impl | `ClaimsExtractor<C>` bean |
+| **Default fallback** | None | `DefaultAuthClaims(Long, email)` |
+| **When to use** | Existing services | New services / CRM |
+
+Both configs are **mutually exclusive** — exactly one loads per service. Never both.
+
+---
 
 ---
 
 # DTO Package
 
-```
+```text
 com.krunish.common.dto
  ├── ApiResponse
  ├── ApiError
@@ -17,13 +85,9 @@ Provides standard API response structure for all services.
 
 ---
 
-# 1️⃣ ApiResponse<T>
+## 1. ApiResponse\<T\>
 
-## Purpose
-
-Wrap all successful API responses.
-
-## JSON Format
+**Purpose:** Wrap all successful API responses.
 
 ```json
 {
@@ -33,8 +97,7 @@ Wrap all successful API responses.
 }
 ```
 
-## Usage (Controller)
-
+**Usage:**
 ```java
 @GetMapping("/{id}")
 public ApiResponse<UserDto> get(@PathVariable UUID id) {
@@ -44,15 +107,9 @@ public ApiResponse<UserDto> get(@PathVariable UUID id) {
 
 ---
 
-# 2️⃣ ApiError
+## 2. ApiError
 
-## Purpose
-
-Standard error response.
-
-Returned automatically by `GlobalExceptionHandler`.
-
-## JSON Format
+**Purpose:** Standard error response. Returned automatically by `GlobalExceptionHandler`.
 
 ```json
 {
@@ -63,23 +120,13 @@ Returned automatically by `GlobalExceptionHandler`.
 }
 ```
 
-## Usage (Service)
-
-```java
-throw new AppException("USER_NOT_FOUND");
-```
-
-Do NOT return manually from controller.
+Do NOT return manually from controller. Throw `AppException` instead.
 
 ---
 
-# 3️⃣ ApiPage<T>
+## 3. ApiPage\<T\>
 
-## Purpose
-
-Standard pagination wrapper.
-
-## JSON Format
+**Purpose:** Standard pagination wrapper.
 
 ```json
 {
@@ -94,8 +141,7 @@ Standard pagination wrapper.
 }
 ```
 
-## Usage (Controller)
-
+**Usage:**
 ```java
 @GetMapping
 public ApiResponse<ApiPage<UserDto>> getAll(Pageable pageable) {
@@ -106,39 +152,14 @@ public ApiResponse<ApiPage<UserDto>> getAll(Pageable pageable) {
 
 ---
 
-# Controller Rules
+## Controller Rules
 
-* Always return `ApiResponse<T>`
-* Never return Entity directly
-* Never return Page directly
-* Never build error JSON manually
+- Always return `ApiResponse<T>`
+- Never return Entity directly
+- Never return `Page` directly
+- Never build error JSON manually
 
 ---
-
-# Standard Response Pattern
-
-### Success
-
-```json
-{
-  "success": true,
-  "message": "...",
-  "data": {}
-}
-```
-
-### Error
-
-```json
-{
-  "success": false,
-  "message": "...",
-  "errorCode": "...",
-  "timestamp": "..."
-}
-```
-Here is the corrected **minimal README.md** for `event` package
-(using proper examples like `Product`, not `Customer`).
 
 ---
 
@@ -151,31 +172,11 @@ com.krunish.common.event
  └── OrgIdFilter
 ```
 
-Provides:
-
-* Multi-tenant entity base
-* Automatic org-level DB filtering
-* Standard Kafka event wrapper
-
 ---
 
-# 1️⃣ BaseOrgEntity
+## 1. BaseOrgEntity
 
-## Purpose
-
-Base class for all **organization-scoped business entities**.
-
-Adds:
-
-```java
-private UUID orgId;
-```
-
-Ensures data belongs to a specific organization.
-
----
-
-## Usage (Entity)
+**Purpose:** Base class for all organization-scoped business entities.
 
 ```java
 @Entity
@@ -183,83 +184,33 @@ public class Product extends BaseOrgEntity {
 }
 ```
 
-Use in:
+Use in: Product, Order, Invoice, Subscription, any org-owned data.
 
-* Product
-* Order
-* Invoice
-* Subscription
-* Any org-owned business data
-
-Do NOT use in:
-
-* User (global)
-* Organization
-* UserOrganization (mapping table)
+Do NOT use in: User (global), Organization, UserOrganization (mapping table).
 
 ---
 
-## Result
+## 2. OrgIdFilter
 
-All queries automatically scoped by `orgId`.
-
----
-
-# 2️⃣ OrgIdFilter
-
-## Purpose
-
-Hibernate filter for automatic tenant isolation.
+**Purpose:** Hibernate filter for automatic tenant isolation.
 
 Applies automatically:
-
 ```sql
 WHERE org_id = :orgId
 ```
 
-Prevents cross-organization data access.
+No manual filtering needed in repositories.
 
----
-
-## Usage
-
-Declared on `BaseOrgEntity`:
-
-```java
-@Filter(name = "orgFilter", condition = "org_id = :orgId")
+**Flow:**
 ```
-
-Enabled per request via security layer.
-
-No manual filtering required in repositories.
-
----
-
-## Flow
-
-```
-Request
- ↓
-OrgContext set
- ↓
-Hibernate filter enabled
- ↓
-All queries auto-filtered by org_id
+Request → OrgContext set → Hibernate filter enabled → All queries auto-filtered
 ```
 
 ---
 
-# 3️⃣ KafkaEventEnvelope<T>
+## 3. KafkaEventEnvelope\<T\>
 
-## Purpose
-
-Standard wrapper for Kafka messages.
-
-Ensures events are tenant-aware.
-
----
-
-## JSON Format
+**Purpose:** Standard wrapper for Kafka messages. Ensures events are tenant-aware.
 
 ```json
 {
@@ -271,65 +222,23 @@ Ensures events are tenant-aware.
 }
 ```
 
----
-
-## Usage (Producer)
-
+**Producer:**
 ```java
 KafkaEventEnvelope<ProductDto> event =
     new KafkaEventEnvelope<>("PRODUCT_CREATED", orgId, productDto);
-
 kafkaTemplate.send("product-topic", event);
 ```
 
----
-
-## Usage (Consumer)
-
+**Consumer:**
 ```java
 @KafkaListener(topics = "product-topic")
 public void consume(KafkaEventEnvelope<ProductDto> event) {
-
     UUID orgId = event.getOrgId();
     ProductDto payload = event.getPayload();
 }
 ```
 
 ---
-
-# Rules
-
-* All org-owned entities must extend `BaseOrgEntity`
-* Never manually add `WHERE org_id` in repository
-* Always wrap Kafka messages in `KafkaEventEnvelope`
-* Do not publish raw payload directly
-
----
-
-# Standard Pattern
-
-## Database
-
-```
-Product extends BaseOrgEntity
- ↓
-OrgIdFilter
- ↓
-Automatic org isolation
-```
-
-## Kafka
-
-```
-ProductDto
- ↓
-KafkaEventEnvelope
- ↓
-Publish
-```
-Good point ✅ — README should clearly show **where each class is used**.
-
-Here is the corrected short version with explicit usage of both classes.
 
 ---
 
@@ -341,25 +250,11 @@ com.krunish.common.exception
  └── GlobalExceptionHandler
 ```
 
-Provides centralized business error handling.
-
 ---
 
-# 1️⃣ AppException
+## 1. AppException
 
-## Purpose
-
-Used to throw business-level errors from Service layer.
-
-## Where To Use
-
-Use inside:
-
-* Service classes
-* Validation logic
-* Security checks
-
-## Example
+**Purpose:** Throw business-level errors from the service layer.
 
 ```java
 if (product == null) {
@@ -367,99 +262,54 @@ if (product == null) {
 }
 ```
 
-Do NOT use in controllers for response building.
+Use inside: Service classes, validation logic, security checks.
+Do NOT use for building controller responses.
 
 ---
 
-# 2️⃣ GlobalExceptionHandler
+## 2. GlobalExceptionHandler
 
-## Purpose
+**Purpose:** Catches all exceptions globally and converts them to `ApiError` JSON.
 
-Automatically catches exceptions and converts them to standard API error response.
+Registered via `@RestControllerAdvice`. No manual usage required.
 
-## Where It Is Used
-
-* Registered globally using `@RestControllerAdvice`
-* Intercepts all exceptions thrown in controllers/services
-
-No manual usage required.
-
----
-
-# Flow
-
-```text
-Service throws AppException
-        ↓
-GlobalExceptionHandler catches it
-        ↓
-Returns ApiError JSON
+**Flow:**
+```
+Service throws AppException → GlobalExceptionHandler catches → Returns ApiError JSON
 ```
 
 ---
 
-# Standard Error JSON
-
-```json
-{
-  "success": false,
-  "message": "PRODUCT_NOT_FOUND",
-  "errorCode": "PRODUCT_NOT_FOUND",
-  "timestamp": "2026-02-28T10:00:00"
-}
-```
-
 ---
 
-# Rules
+# Security Package — Legacy Mode
 
-* Throw `AppException` in Service layer
-* Do not catch it in Controller
-* Do not manually build error response
-* Let `GlobalExceptionHandler` handle everything
-  Here is the **concise, implementation-focused README.md** for your `security` package.
-
-No unnecessary theory. Clear purpose, usage, and implementation guidance.
-
----
-
-# Security Package
+> Active when `krunish.auth.mode=legacy` (or property not set).
 
 ```text
 com.krunish.common.security
- ├── aop
- ├── AuthProperties
- ├── AuthSecurityProperties
  ├── AuthUser
- ├── AuthWrapper
- ├── HibernateFilterConfigurer
- ├── JwtFilter
  ├── JwtValidator
+ ├── JwtFilter
  ├── OrgAccessValidator
- └── OrgContext
+ ├── OrgContext
+ ├── HibernateFilterConfigurer
+ ├── AuthProperties
+ └── AuthSecurityProperties
 ```
 
-Provides:
+## Security Flow (Legacy)
 
-* JWT authentication
-* Multi-tenant org validation
-* Automatic org DB filtering
-* Centralized security configuration
-
----
-
-# 🔐 Security Flow
-
-```text
+```
 Request
  ↓
 JwtFilter
  ↓
-JwtValidator
+JwtValidator  (you implement)
  ↓
-OrgAccessValidator
+OrgAccessValidator  (you implement)
  ↓
-OrgContext.set()
+OrgContext.set(userId, orgId, email)
  ↓
 HibernateFilterConfigurer
  ↓
@@ -468,274 +318,397 @@ Controller
 
 ---
 
-# 1️⃣ AuthUser
+## 1. AuthUser
 
-## Purpose
+Represents the authenticated user extracted from JWT.
 
-Represents authenticated user extracted from JWT.
+```java
+public record AuthUser(Long userId, String email) {}
+```
 
-## Contains
-
-* userId
-* email
-* roles / permissions
-
-## Used By
-
-* JwtValidator (returns it)
-* OrgContext (stores it)
+Returned by `JwtValidator`, stored in `OrgContext`.
 
 ---
 
-# 2️⃣ JwtValidator (Interface)
+## 2. JwtValidator
 
-## Purpose
-
-Validates JWT and extracts user info.
-
-## You Must Implement
+**You must implement this.**
 
 ```java
 @Component
 public class JwtValidatorImpl implements JwtValidator {
-
     @Override
     public AuthUser validate(String token) {
-        // validate signature
-        // parse claims
-        return new AuthUser(...);
+        // validate signature, parse claims
+        return new AuthUser(userId, email);
     }
 }
 ```
 
-## Used By
-
-* JwtFilter
-
 ---
 
-# 3️⃣ OrgAccessValidator (Interface)
+## 3. OrgAccessValidator
 
-## Purpose
-
-Checks if user belongs to selected organization.
-
-## You Must Implement
+**You must implement this** if your service uses org-level access control.
 
 ```java
 @Component
 public class OrgAccessValidatorImpl implements OrgAccessValidator {
-
     @Override
     public void validate(UUID userId, UUID orgId) {
-        boolean allowed = userOrgRepository
-            .existsByUserIdAndOrgId(userId, orgId);
-
-        if (!allowed) {
+        if (!userOrgRepository.existsByUserIdAndOrgId(userId, orgId)) {
             throw new AppException("ORG_ACCESS_DENIED");
         }
     }
 }
 ```
 
-## Used By
-
-* JwtFilter
+Optional — if no bean is registered, org validation is skipped.
 
 ---
 
-# 4️⃣ OrgContext
+## 4. OrgContext
 
-## Purpose
-
-Stores current request context using ThreadLocal.
-
-## Stores
-
-* userId
-* orgId
-* AuthUser
-
-## Usage Anywhere
+Thread-local store for the current request context. Cleared automatically after request.
 
 ```java
-UUID userId = OrgContext.getUserId();
-UUID orgId = OrgContext.getOrgId();
+Long userId  = OrgContext.getUserId();
+Long orgId   = OrgContext.getOrgId();
+String email = OrgContext.getEmail();
 ```
 
-Automatically cleared after request.
+---
+
+## 5. JwtFilter
+
+Runs once per request. Responsibilities:
+- Extracts `Bearer` token from `Authorization` header
+- Calls `JwtValidator`
+- Reads `X-ORG-ID` header (if `OrgAccessValidator` is registered)
+- Calls `OrgAccessValidator`
+- Sets `OrgContext`
+
+No controller-level security code needed.
 
 ---
 
-# 5️⃣ JwtFilter
-
-## Purpose
-
-Main security filter (runs once per request).
-
-## Responsibilities
-
-* Extract token
-* Validate token (JwtValidator)
-* Read `X-ORG-ID`
-* Validate org access (OrgAccessValidator)
-* Set OrgContext
-
-No controller-level security required.
-
 ---
 
-# 6️⃣ HibernateFilterConfigurer
+# Security Package — Generic Mode
 
-## Purpose
+> Active when `krunish.auth.mode=generic`.
 
-Enables Hibernate org filter per request.
-
-Automatically applies:
-
-```sql
-WHERE org_id = :orgId
+```text
+com.krunish.common.security.generic
+ ├── AuthClaims                  (marker interface)
+ ├── DefaultAuthClaims           (built-in: Long userId + email)
+ ├── ClaimsExtractor<C>          (you provide — maps JWT Claims → your record)
+ ├── DefaultClaimsExtractor      (built-in fallback for Long services)
+ ├── TokenValidator<C>           (interface — validate token → typed claims)
+ ├── GenericJwtTokenValidator<C> (built-in JWT impl of TokenValidator)
+ ├── AuthFilter                  (marker interface for the filter)
+ ├── GenericJwtFilter<C>         (built-in filter — sets AuthContext)
+ ├── GenericOrgAccessValidator   (optional — you implement for org checks)
+ └── AuthContext                 (thread-local — getClaims(), getOrgId())
 ```
 
-Uses value from:
+## Security Flow (Generic)
 
 ```
-OrgContext.getOrgId()
+Request
+ ↓
+GenericJwtFilter
+ ↓
+TokenValidator.validate(token)         (GenericJwtTokenValidator by default)
+ ↓
+ClaimsExtractor.extract(rawClaims)     (you provide)
+ ↓
+GenericOrgAccessValidator.validate()   (optional — you implement)
+ ↓
+AuthContext.set(claims, orgId)
+ ↓
+HibernateFilterConfigurer              (if GenericOrgAccessValidator bean exists)
+ ↓
+Controller
 ```
 
-No manual filtering needed in repositories.
-
 ---
 
-# 7️⃣ AuthWrapper
+## 1. AuthClaims
 
-## Purpose
-
-Registers and configures:
-
-* JwtFilter
-* Security configuration
-* Public paths
-
-Auto-configures security for service.
-
-No need to write custom Spring Security config in each service.
-
----
-
-# 8️⃣ AuthProperties
-
-## Purpose
-
-Defines public (non-authenticated) endpoints.
-
-## application.yml
-
-```yaml
-auth:
-  public-paths:
-    - /api/auth/**
-    - /actuator/**
-```
-
-Used by JwtFilter to skip authentication.
-
----
-
-# 9️⃣ AuthSecurityProperties
-
-## Purpose
-
-Advanced security config properties.
-
-Examples:
-
-* Header names
-* Token prefix
-* Org header name
-
-Configured via `application.yml`.
-
----
-
-# 🔟 aop (Permission Layer)
-
-Used for method-level permission checks.
-
-Example:
+Marker interface. Every service defines its own record implementing it.
 
 ```java
-@RequiresPermission("PRODUCT_CREATE")
-public void createProduct() { }
+// Built-in fallback (Long services)
+public record DefaultAuthClaims(Long userId, String email) implements AuthClaims {}
+
+// CRM service example (UUID + rich claims)
+public record CrmAuthClaims(
+    UUID userId,
+    String email,
+    String role,
+    String globalStatus,
+    String kycStatus
+) implements AuthClaims {}
 ```
 
-Handled via Aspect class.
+---
+
+## 2. ClaimsExtractor\<C\>
+
+**The only bean you must provide** in generic mode. Maps raw JJWT `Claims` to your typed record.
+
+```java
+// In your @Configuration class
+@Bean
+public ClaimsExtractor<CrmAuthClaims> claimsExtractor() {
+    return claims -> new CrmAuthClaims(
+        UUID.fromString(claims.getSubject()),
+        claims.get("email", String.class),
+        claims.get("role", String.class),
+        claims.get("globalStatus", String.class),
+        claims.get("kycStatus", String.class)
+    );
+}
+```
+
+If no bean is provided, `DefaultClaimsExtractor` is used (reads `sub` as `Long` + `email`).
+
+---
+
+## 3. TokenValidator\<C\>
+
+Interface for token validation. `GenericJwtTokenValidator` is auto-registered if no custom bean is found.
+
+To replace with a custom strategy (e.g. opaque tokens):
+```java
+@Bean
+public TokenValidator<CrmAuthClaims> tokenValidator() {
+    return token -> {
+        // custom validation logic
+        return new CrmAuthClaims(...);
+    };
+}
+```
+
+---
+
+## 4. AuthFilter
+
+Marker interface implemented by `GenericJwtFilter`. Also extends `jakarta.servlet.Filter` so it can be added to the filter chain safely.
+
+To provide a fully custom filter:
+```java
+@Component
+public class MyFilter extends OncePerRequestFilter implements AuthFilter {
+    // GenericJwtFilter will NOT be registered — AuthFilter bean already exists
+}
+```
+
+---
+
+## 5. GenericJwtFilter\<C\>
+
+Auto-registered. Handles the full auth flow per request:
+- Skips public paths
+- Extracts `Bearer` token
+- Calls `TokenValidator`
+- Optionally calls `GenericOrgAccessValidator`
+- Sets `AuthContext`
+- Clears `AuthContext` in `finally`
+
+---
+
+## 6. GenericOrgAccessValidator
+
+Optional. Implement if your service needs org-level access control.
+
+```java
+@Component
+public class MyOrgValidator implements GenericOrgAccessValidator {
+    @Override
+    public void validate(AuthClaims claims, Long orgId) {
+        CrmAuthClaims c = (CrmAuthClaims) claims;
+        if (!membershipRepo.existsByUserIdAndOrgId(c.userId(), orgId)) {
+            throw new AppException("ORG_ACCESS_DENIED");
+        }
+    }
+}
+```
+
+If no bean is registered, org validation is skipped entirely.
+
+---
+
+## 7. AuthContext
+
+Thread-local store for the current request context. Replaces `OrgContext` in generic mode. Cleared automatically after request.
+
+```java
+// CRM service (UUID claims)
+CrmAuthClaims claims = AuthContext.getClaims();
+UUID   userId       = claims.userId();
+String role         = claims.role();
+String kycStatus    = claims.kycStatus();
+Long   orgId        = AuthContext.getOrgId();
+boolean isService   = AuthContext.isServiceToken();
+
+// Legacy Long service using DefaultAuthClaims
+DefaultAuthClaims claims = AuthContext.getClaims();
+Long   userId = claims.userId();
+String email  = claims.email();
+```
+
+---
 
 ---
 
 # How To Use In A Service
 
-## Step 1 – Add dependency
+## Step 1 — Add dependency
+
 ```xml
 <dependency>
     <groupId>com.krunish</groupId>
     <artifactId>common</artifactId>
 </dependency>
 ```
----
 
-## Step 2 – Configure public endpoints
+## Step 2 — Choose mode and configure
 
 ```yaml
-auth:
-  public-paths:
-    - /api/auth/**
+krunish:
+  auth:
+    mode: generic        # or legacy
+    public-paths:
+      - /api/v1/auth/**
+      - /actuator/**
+    security:
+      secret: your-secret-key
 ```
 
+## Step 3 — Provide required beans
+
+### Legacy mode — implement two interfaces:
+
+```java
+@Component
+public class JwtValidatorImpl implements JwtValidator { ... }
+
+@Component  // optional — skip if no org filtering needed
+public class OrgAccessValidatorImpl implements OrgAccessValidator { ... }
+```
+
+### Generic mode — provide one lambda bean:
+
+```java
+@Configuration
+public class SecurityConfig {
+
+    // UUID-based service
+    @Bean
+    public ClaimsExtractor<CrmAuthClaims> claimsExtractor() {
+        return claims -> new CrmAuthClaims(
+            UUID.fromString(claims.getSubject()),
+            claims.get("email", String.class),
+            claims.get("role", String.class),
+            claims.get("globalStatus", String.class),
+            claims.get("kycStatus", String.class)
+        );
+    }
+
+    // Optional — only if org filtering is needed
+    @Bean
+    public GenericOrgAccessValidator orgAccessValidator(...) {
+        return (claims, orgId) -> { ... };
+    }
+}
+```
+
+## Step 4 — Nothing else
+
+`SecurityFilterChain`, `JwtFilter`, `TokenValidator` are all auto-configured. No Spring Security config class needed in the service.
+
 ---
 
-## Step 3 – Implement Required Interfaces
+---
 
-You must implement:
+# Adding a New JWT Field (Generic Mode)
 
-* JwtValidator
-* OrgAccessValidator
+Zero changes to common-lib. Three steps in your service only:
 
-Everything else works automatically.
+```
+1. Add field to your AuthClaims record
+      CrmAuthClaims(UUID userId, String email, String role, String globalStatus, String kycStatus, String tenantId)
+
+2. Add claim extraction in SecurityConfig
+      claims.get("tenantId", String.class)
+
+3. Encode it in JwtIssuer when minting tokens
+```
+
+Done.
 
 ---
 
-# What Developers Should NOT Do
+---
 
-* Do NOT validate JWT in controller
-* Do NOT manually check org in controller
-* Do NOT manually filter by org in repository
-* Do NOT parse token manually
+# What Developers Must NOT Do
 
-Everything handled automatically.
+- Do NOT validate JWT in controller
+- Do NOT manually check org membership in controller
+- Do NOT manually add `WHERE org_id` in repository queries
+- Do NOT parse token strings manually
+- Do NOT return Entity directly from controller
+- Do NOT build error JSON manually in controller
+- Do NOT call `AuthContext.set()` or `OrgContext.set()` manually
+- Do NOT mix legacy and generic mode in the same service
 
 ---
 
-# Final Responsibility Table
-
-| Class                     | Responsibility              |
-| ------------------------- | --------------------------- |
-| JwtFilter                 | Entry security filter       |
-| JwtValidator              | Validate JWT                |
-| OrgAccessValidator        | Validate user-org relation  |
-| OrgContext                | Store request context       |
-| HibernateFilterConfigurer | Apply DB org filter         |
-| AuthWrapper               | Auto security configuration |
-| AuthProperties            | Public path config          |
-| AuthSecurityProperties    | Header/token config         |
-| AuthUser                  | Authenticated user model    |
-
 ---
 
-This package provides:
+# Responsibility Table
 
-* Centralized authentication
-* Multi-tenant enforcement
-* Automatic DB isolation
-* Clean controllers
-* No security duplication across services
+## Legacy Mode
+
+| Class | Responsibility |
+|---|---|
+| `JwtFilter` | Entry security filter |
+| `JwtValidator` | Validate JWT → `AuthUser` |
+| `OrgAccessValidator` | Validate user-org membership |
+| `OrgContext` | Thread-local request context |
+| `HibernateFilterConfigurer` | Apply DB org filter |
+| `AuthProperties` | Public paths + security config |
+| `AuthUser` | Authenticated user model |
+
+## Generic Mode
+
+| Class | Responsibility |
+|---|---|
+| `GenericJwtFilter` | Entry security filter |
+| `TokenValidator` | Interface — validate token → typed claims |
+| `GenericJwtTokenValidator` | Default JWT impl of `TokenValidator` |
+| `ClaimsExtractor` | Map raw JWT claims → your typed record |
+| `DefaultClaimsExtractor` | Fallback extractor (Long + email) |
+| `AuthClaims` | Marker interface for claims records |
+| `DefaultAuthClaims` | Built-in fallback claims (Long + email) |
+| `AuthFilter` | Marker interface for the security filter |
+| `GenericOrgAccessValidator` | Optional — validate user-org membership |
+| `AuthContext` | Thread-local request context |
+| `HibernateFilterConfigurer` | Apply DB org filter |
+| `AuthProperties` | Public paths + security config |
+
+## Shared
+
+| Class | Responsibility |
+|---|---|
+| `CommonAutoConfiguration` | Auto-wires legacy mode |
+| `GenericCommonAutoConfiguration` | Auto-wires generic mode |
+| `AppException` | Business error — thrown in service layer |
+| `GlobalExceptionHandler` | Converts exceptions → `ApiError` JSON |
+| `ApiResponse<T>` | Standard success response wrapper |
+| `ApiError` | Standard error response |
+| `ApiPage<T>` | Standard pagination wrapper |
+| `BaseOrgEntity` | Org-scoped entity base class |
+| `KafkaEventEnvelope<T>` | Tenant-aware Kafka message wrapper |

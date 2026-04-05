@@ -21,6 +21,11 @@ import java.util.Optional;
 
 @AutoConfiguration
 @EnableConfigurationProperties(AuthProperties.class)
+@ConditionalOnProperty(
+        name = "krunish.auth.mode",
+        havingValue = "legacy",
+        matchIfMissing = true
+)
 @ComponentScan(basePackages = {
         "com.krunish.common.security.aop"  // only scan AOP, not all of security
 })

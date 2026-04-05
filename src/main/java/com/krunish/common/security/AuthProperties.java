@@ -13,14 +13,31 @@ import java.util.List;
 public class AuthProperties {
 
     private List<String> publicPaths;
+    private List<String> privatePaths;
     private Security security = new Security();
 
     public boolean isPublic(String path) {
         AntPathMatcher matcher = new AntPathMatcher();
+
+        if (isPrivate(path)) {
+            return false;
+        }
+
         boolean result = publicPaths != null &&
                 publicPaths.stream().anyMatch(pattern -> matcher.match(pattern, path));
         System.out.println(">>> [AuthProperties] isPublic('" + path + "') = " + result);
         System.out.println(">>> [AuthProperties] Configured publicPaths = " + publicPaths);
+        return result;
+    }
+
+    public boolean isPrivate(String path) { // 👈 Added
+        AntPathMatcher matcher = new AntPathMatcher();
+        boolean result = privatePaths != null &&
+                privatePaths.stream().anyMatch(pattern -> matcher.match(pattern, path));
+
+        System.out.println(">>> [AuthProperties] isPrivate('" + path + "') = " + result);
+        System.out.println(">>> [AuthProperties] Configured privatePaths = " + privatePaths);
+
         return result;
     }
 
