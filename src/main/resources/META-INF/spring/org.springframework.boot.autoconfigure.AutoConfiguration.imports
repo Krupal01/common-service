@@ -1,1 +1,2 @@
 com.krunish.common.config.CommonAutoConfiguration
+com.krunish.common.config.GenericCommonAutoConfiguration
