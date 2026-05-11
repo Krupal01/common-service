@@ -3,9 +3,12 @@ package com.krunish.common.security;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
 public class JwtFilter extends OncePerRequestFilter {
 
@@ -109,6 +112,15 @@ public class JwtFilter extends OncePerRequestFilter {
                     user.email(),
                     false
             );
+
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            user.userId(),     // principal
+                            null,              // credentials (null — already validated)
+                            List.of()          // authorities (empty — you use @RequiresPermission, not Spring roles)
+                    );
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
             System.out.println(">>> [JwtFilter] ✅ OrgContext set — userId: " + user.userId() + ", orgId: " + orgId + ", email: " + user.email());
 
             // ── Step 7: Continue filter chain ─────────────────────
@@ -119,6 +131,7 @@ public class JwtFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
         } finally {
             OrgContext.clear();
+            SecurityContextHolder.clearContext();
             System.out.println(">>> [JwtFilter] OrgContext cleared");
         }
     }
