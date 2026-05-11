@@ -16,11 +16,11 @@ import java.util.List;
 
 /**
  * Generic JWT filter.
- *
+ * <p>
  * Delegates token validation to {@link TokenValidator} (pluggable).
  * Stores the resulting {@link AuthClaims} in {@link AuthContext} for the request lifetime.
  * Clears AuthContext in the finally block — no leaks between requests.
- *
+ * <p>
  * OrgAccessValidator is optional — only wired when the service needs org-level access control.
  */
 public class GenericJwtFilter<C extends AuthClaims> extends OncePerRequestFilter implements AuthFilter {
@@ -78,15 +78,9 @@ public class GenericJwtFilter<C extends AuthClaims> extends OncePerRequestFilter
 
             Long orgId = 0L;
 
-            if (orgAccessValidator != null) {
-                String orgHeader = request.getHeader("X-ORG-ID");
+            String orgHeader = request.getHeader("X-ORG-ID");
 
-                if (orgHeader == null) {
-                    System.out.println(">>> [JwtFilter] ❌ Missing X-ORG-ID header → 400");
-                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    return;
-                }
-
+            if (orgHeader != null) {
                 try {
                     orgId = Long.parseLong(orgHeader);
                 } catch (NumberFormatException e) {
@@ -94,7 +88,9 @@ public class GenericJwtFilter<C extends AuthClaims> extends OncePerRequestFilter
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                     return;
                 }
+            }
 
+            if (orgAccessValidator != null) {
                 try {
                     orgAccessValidator.validate(claims, orgId);
                     System.out.println(">>> [JwtFilter] ✅ Org access valid — orgId: " + orgId);

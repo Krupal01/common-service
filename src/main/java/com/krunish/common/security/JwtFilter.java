@@ -74,16 +74,10 @@ public class JwtFilter extends OncePerRequestFilter {
             }
 
 
-            if(orgAccessValidator != null) {
-                String orgHeader = request.getHeader("X-ORG-ID");
-                System.out.println(">>> [JwtFilter] X-ORG-ID header: " + orgHeader);
+            String orgHeader = request.getHeader("X-ORG-ID");
+            System.out.println(">>> [JwtFilter] X-ORG-ID header: " + orgHeader);
 
-                if (orgHeader == null) {
-                    System.out.println(">>> [JwtFilter] ❌ Missing X-ORG-ID header → 400");
-                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    return;
-                }
-
+            if (orgHeader != null) {
                 try {
                     orgId = Long.parseLong(orgHeader);
                     System.out.println(">>> [JwtFilter] Parsed orgId: " + orgId);
@@ -92,7 +86,9 @@ public class JwtFilter extends OncePerRequestFilter {
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                     return;
                 }
+            }
 
+            if (orgAccessValidator != null) {
                 // Validate user belongs to org
                 try {
                     orgAccessValidator.validate(user.userId(), orgId);
